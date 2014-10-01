@@ -5,7 +5,7 @@
  * this file and include it in basic-server.js so that it actually works.
  * *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html. */
 
-var handleRequest = function(request, response) {
+module.exports = function (request, response) {
   /* the 'request' argument comes from nodes http module. It includes info about the
   request - such as what URL the browser is requesting. */
 
@@ -20,17 +20,44 @@ var handleRequest = function(request, response) {
    * below about CORS. */
   var headers = defaultCorsHeaders;
 
-  headers['Content-Type'] = "text/plain";
+  // headers['Content-Type'] = "text/plain";
+  headers['Content-Type'] = "application/json";
+
+  switch(request.method) {
+    case "GET":
+      response.writeHead(statusCode, headers);
+      response.write(JSON.stringify(chatMessages));
+      break;
+    case "POST":
+      statusCode = 201;
+      var incoming = "";
+      request.on('data', function(data) {
+        incoming += data;
+        console.log(incoming);
+      });
+      request.on('end', function() {
+        var inJSON = JSON.parse(incoming);
+        chatMessages.results.push(inJSON);
+      });
+      response.write(JSON.stringify(chatMessages));
+      break;
+    case "OPTIONS":
+      response.writeHead(statusCode, headers);
+      break;
+  }
 
   /* .writeHead() tells our server what HTTP status code to send back */
-  response.writeHead(statusCode, headers);
 
+  // response.writeHead(statusCode, headers);
   /* Make sure to always call response.end() - Node will not send
    * anything back to the client until you do. The string you pass to
    * response.end() will be the body of the response - i.e. what shows
    * up in the browser.*/
-  response.end("Hello, World!");
+  response.end();
 };
+
+var chatMessages = {};
+chatMessages.results = [{objectId : 1, createdAt: "10", roomname: "lobby", username: "rishigoooomar", text: "GOOOOOOOOOMAR"}];
 
 /* These headers will allow Cross-Origin Resource Sharing (CORS).
  * This CRUCIAL code allows this server to talk to websites that
